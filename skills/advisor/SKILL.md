@@ -96,7 +96,7 @@ After receiving advice:
 - Provide clear, focused queries with relevant context
 - Allow the full 10-minute timeout for complex queries
 - Consider the advisor's perspective alongside your own analysis
-- Choose the right advisor for the problem type (Codex for code, Gemini for reasoning)
+- Choose the right advisor for the problem type (Codex for deep reasoning, Gemini for online research)
 
 **DON'T:**
 - Consult advisors for straightforward problems you can solve directly
@@ -118,40 +118,58 @@ Bash tool parameters:
 
 ## Example Scenarios
 
-### Example 1: Debugging Performance Issue
+### Example 1: Deep Reasoning - Architecture Trade-offs
 
-**Situation:** API response times degraded after recent changes, standard profiling hasn't pinpointed the issue.
-
-**Query to Codex:**
-```bash
-codex e "API response time increased from 200ms to 2s after adding user preferences caching. Profiling shows time spent in database queries unchanged. What are common causes of performance degradation when adding caching layers?" 2>/dev/null
-```
-
-### Example 2: Architecture Decision
-
-**Situation:** Uncertain whether to use event-driven architecture or REST APIs for service communication.
-
-**Query to Gemini:**
-```bash
-gemini "For a system with 5 microservices handling e-commerce orders, what are the trade-offs between event-driven architecture and REST APIs for inter-service communication? Team has limited experience with message queues." 2>/dev/null
-```
-
-### Example 3: Algorithm Selection
-
-**Situation:** Need to implement efficient full-text search with fuzzy matching.
+**Situation:** Need to deeply analyze trade-offs between multiple architectural approaches.
 
 **Query to Codex:**
 ```bash
-codex e "What algorithm or data structure would you recommend for implementing full-text search with fuzzy matching on a dataset of 1M documents, prioritizing search speed over index build time?" 2>/dev/null
+codex e "I need to design a notification system that handles 100K notifications/day with delivery guarantees. Compare event-driven (Kafka), queue-based (RabbitMQ), and polling approaches. Consider: failure handling, scaling, operational complexity, latency requirements, and team expertise (3 backend devs, no DevOps). What would you recommend and why?" 2>/dev/null
 ```
 
-### Example 4: Design Pattern Validation
+### Example 2: Online Research - Current Best Practices
 
-**Situation:** Considering implementing the saga pattern for distributed transactions.
+**Situation:** Need to know current best practices for a technology or framework.
 
 **Query to Gemini:**
 ```bash
-gemini "I'm implementing a multi-step booking process across 3 services (inventory, payment, notification). Is the saga pattern appropriate here, and what are the main pitfalls to avoid?" 2>/dev/null
+gemini "What are the current best practices for implementing authentication in Next.js 14 apps in 2024? I need to understand popular libraries, session vs JWT trade-offs, and security considerations." 2>/dev/null
+```
+
+### Example 3: Deep Reasoning - Complex Algorithm Design
+
+**Situation:** Complex algorithmic problem requiring multi-step reasoning.
+
+**Query to Codex:**
+```bash
+codex e "I need to implement a job scheduler that: 1) respects dependencies between jobs, 2) handles priority levels, 3) supports job cancellation mid-execution, 4) distributes across multiple workers. Walk through the data structures and algorithm design. What are the edge cases and how would you handle them?" 2>/dev/null
+```
+
+### Example 4: Online Research - Library/Tool Investigation
+
+**Situation:** Need current information about tools, libraries, or frameworks.
+
+**Query to Gemini:**
+```bash
+gemini "I need a Python library for parsing PDFs with table extraction. Research current options (2024), compare their accuracy, performance, and ease of use. What do developers recommend?" 2>/dev/null
+```
+
+### Example 5: Deep Reasoning - Debugging Complex Logic
+
+**Situation:** Complex bug requiring careful logical reasoning through multiple possibilities.
+
+**Query to Codex:**
+```bash
+codex e "I have a distributed transaction that occasionally commits on service A but fails on service B, leaving inconsistent state. The retry logic sometimes creates duplicates. Given: idempotency keys, 2PC is not an option, compensation logic exists but races with retries. Reason through the failure scenarios and design a robust solution." 2>/dev/null
+```
+
+### Example 6: Online Research - Documentation Lookup
+
+**Situation:** Need to find specific API documentation or examples.
+
+**Query to Gemini:**
+```bash
+gemini "Find documentation and examples for using PostgreSQL's LISTEN/NOTIFY feature with connection pooling (pgbouncer). What are the gotchas and how do production systems handle this?" 2>/dev/null
 ```
 
 ## Integration with Regular Workflow
