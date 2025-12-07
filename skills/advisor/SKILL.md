@@ -114,7 +114,19 @@ Bash tool parameters:
 - command: codex e "query" 2>/dev/null  OR  gemini "query" 2>/dev/null
 - description: "Consulting [Codex/Gemini] about [brief problem description]"
 - timeout: 600000  (10 minutes in milliseconds)
+- dangerouslyDisableSandbox: true  (REQUIRED - see note below)
 ```
+
+### Important: Sandbox Requirement
+
+**You MUST set `dangerouslyDisableSandbox: true` when calling codex or gemini.**
+
+These tools need to write session files outside the default sandbox-allowed directories. Without this parameter, they'll fail with:
+```
+Read-only file system (os error 30)
+```
+
+This is safe because these are user-installed, whitelisted tools that require filesystem access for session management.
 
 ## Example Scenarios
 
