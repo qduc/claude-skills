@@ -6,20 +6,14 @@
     },
     "metadata": {
         "description": "Curated Claude Code plugins: skills, workflows, and productivity tools",
-        "version": "1.0.1"
+        "version": "1.0.2"
     },
     "plugins": [
         {
             "name": "advisor-skills",
             "description": "Teach Claude how to utilize other AI agents like Codex, Gemini for consulting, coding, and research tasks.",
             "source": "./",
-            "strict": false,
-            "skills": [
-                "./skills/advisor"
-            ],
-            "agents": [
-                "./agents/neutral-advisor.md"
-            ]
+            "strict": false
         }
     ]
 }
