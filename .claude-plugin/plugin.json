@@ -1,0 +1,9 @@
+{
+  "name": "advisor-skills",
+  "version": "1.0.3",
+  "description": "Teach Claude how to utilize other AI agents like Codex, Gemini for consulting, coding, and research tasks.",
+  "author": {
+    "name": "Duc Nguyen",
+    "email": "duc@qduc.me"
+  }
+}
