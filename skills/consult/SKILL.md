@@ -1,15 +1,15 @@
 ---
-name: advisor
+name: consult
 description: Use this skill when Claude needs an outside perspective on complex problems, is stuck on a technical challenge, needs validation of an approach, or wants consultation on architectural decisions. Provides access to Codex and Gemini for getting unbiased second opinions and fresh perspectives.
 ---
 
-# Advisor Skill
+# Consult Skill
 
 This skill enables Claude to consult other AI models when facing challenging problems that benefit from an outside perspective.
 
 ## When to Use This Skill
 
-Use the advisor skill when:
+Use the consult skill when:
 
 - **Stuck on a problem** - Exhausted obvious approaches and need fresh ideas
 - **Complex architectural decisions** - Need validation or alternative perspectives on design choices
@@ -18,7 +18,7 @@ Use the advisor skill when:
 - **Validating assumptions** - Want to verify an approach before implementing
 - **Need specialized expertise** - Problem involves domains where another perspective helps
 
-## Available Advisors
+## Available AI Models
 
 ### Codex
 **Best for:** Deep reasoning problems, complex logical challenges, multi-step analysis
@@ -54,7 +54,7 @@ gemini "your query here" 2>/dev/null
 
 ### 1. Identify the Need
 
-Before consulting an advisor, clearly identify:
+Before consulting external AI models, clearly identify:
 - What problem you're facing
 - What you've already tried
 - What specific insight you need
@@ -67,7 +67,7 @@ Craft a clear, focused query that:
 - Mentions constraints or requirements
 - Avoids unnecessary details
 
-### 3. Execute the Consultation
+### 3. Consult the AI Model
 
 Use the Bash tool with appropriate timeout (10 minutes = 600000ms):
 
@@ -92,15 +92,15 @@ After receiving advice:
 ## Best Practices
 
 **DO:**
-- Use advisors when genuinely stuck or uncertain
+- Use external AI models when genuinely stuck or uncertain
 - Provide clear, focused queries with relevant context
 - Allow the full 10-minute timeout for complex queries
-- Consider the advisor's perspective alongside your own analysis
-- Choose the right advisor for the problem type (Codex for deep reasoning, Gemini for online research)
+- Consider the AI model's perspective alongside your own analysis
+- Choose the right model for the problem type (Codex for deep reasoning, Gemini for online research)
 
 **DON'T:**
-- Consult advisors for straightforward problems you can solve directly
-- Use advisors as a substitute for your own analysis
+- Consult external models for straightforward problems you can solve directly
+- Use external models as a substitute for your own analysis
 - Include sensitive or proprietary information in queries
 - Accept advice blindly without evaluating its fit for your context
 - Make excessive queries - reserve for genuinely challenging situations
@@ -186,12 +186,12 @@ gemini "Find documentation and examples for using PostgreSQL's LISTEN/NOTIFY fea
 
 ## Integration with Regular Workflow
 
-The advisor skill complements Claude's normal problem-solving:
+The consult skill complements Claude's normal problem-solving:
 
 1. **Attempt direct solution** - Use your knowledge and available tools first
 2. **Identify complexity** - Recognize when a problem is particularly challenging
-3. **Consult advisor** - Get outside perspective on the challenging aspects
-4. **Synthesize solution** - Combine advisor input with your analysis
+3. **Consult external AI models** - Get outside perspective on the challenging aspects
+4. **Synthesize solution** - Combine external input with your analysis
 5. **Implement** - Execute the solution using all available information
 
-Remember: Advisors provide valuable perspectives, but you remain responsible for the final implementation and ensuring it fits the specific context and requirements.
+Remember: External AI models provide valuable perspectives, but you remain responsible for the final implementation and ensuring it fits the specific context and requirements.
