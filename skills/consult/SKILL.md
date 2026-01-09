@@ -1,11 +1,11 @@
 ---
 name: consult
-description: Use this skill when Claude needs an outside perspective on complex problems, is stuck on a technical challenge, needs validation of an approach, or wants consultation on architectural decisions. Provides access to Codex and Gemini for getting unbiased second opinions and fresh perspectives.
+description: Use this skill when Claude needs an outside perspective on complex problems, is stuck on a technical challenge, needs validation of an approach, or wants consultation on architectural decisions. Provides access to Strategist, Codex, and Gemini for getting unbiased second opinions and fresh perspectives.
 ---
 
 # Consult Skill
 
-This skill enables Claude to consult other AI models when facing challenging problems that benefit from an outside perspective.
+This skill enables Claude to consult other AI models and specialized agents when facing challenging problems that benefit from an outside perspective.
 
 ## When to Use This Skill
 
@@ -18,7 +18,21 @@ Use the consult skill when:
 - **Validating assumptions** - Want to verify an approach before implementing
 - **Need specialized expertise** - Problem involves domains where another perspective helps
 
-## Available AI Models
+## Available Consultants
+
+### Strategist Agent
+**Best for:** Unbiased, objective advice on complex problems and strategic decisions
+
+**How to use:**
+Use the `Task` tool with `subagent_type` name "advisor-skills:strategist".
+
+**Use when:**
+- Need objective perspective free from existing code/implementation bias
+- Complex architectural or strategic decisions requiring fresh eyes
+- Team is too close to the problem to see clearly
+- Multiple viable options and need help evaluating trade-offs
+- Challenging assumptions or exploring alternative approaches
+- Want devil's advocate perspective on a proposed solution
 
 ### Codex
 **Best for:** Deep reasoning problems, complex logical challenges, multi-step analysis
@@ -92,15 +106,18 @@ After receiving advice:
 ## Best Practices
 
 **DO:**
-- Use external AI models when genuinely stuck or uncertain
+- Use external consultants when genuinely stuck or uncertain
 - Provide clear, focused queries with relevant context
-- Allow the full 10-minute timeout for complex queries
-- Consider the AI model's perspective alongside your own analysis
-- Choose the right model for the problem type (Codex for deep reasoning, Gemini for online research)
+- Allow the full 10-minute timeout for complex queries (Codex/Gemini)
+- Consider the consultant's perspective alongside your own analysis
+- Choose the right consultant for the problem type:
+  - **Strategist** for objective, unbiased strategic advice
+  - **Codex** for deep reasoning and complex analysis
+  - **Gemini** for online research and current information
 
 **DON'T:**
-- Consult external models for straightforward problems you can solve directly
-- Use external models as a substitute for your own analysis
+- Consult external consultants for straightforward problems you can solve directly
+- Use external consultants as a substitute for your own analysis
 - Include sensitive or proprietary information in queries
 - Accept advice blindly without evaluating its fit for your context
 - Make excessive queries - reserve for genuinely challenging situations
@@ -130,7 +147,19 @@ This is safe because these are user-installed, whitelisted tools that require fi
 
 ## Example Scenarios
 
-### Example 1: Deep Reasoning - Architecture Trade-offs
+### Example 1: Strategic Advice - Architecture Decision
+
+**Situation:** Need unbiased, objective perspective on a complex architectural decision.
+
+**Use Strategist Agent:**
+```
+runSubagent tool with:
+- agentName: "strategist"
+- description: "Architectural decision consultation"
+- prompt: "I'm deciding between microservices and monolith architecture for a new project. Our team has 5 developers, the product is still finding product-market fit, and we expect high growth if successful. However, our team is excited about microservices and has been pushing for it. I'm worried we might be choosing it for the wrong reasons. Can you provide an unbiased analysis of this decision?"
+```
+
+### Example 2: Deep Reasoning - Architecture Trade-offs
 
 **Situation:** Need to deeply analyze trade-offs between multiple architectural approaches.
 
@@ -139,7 +168,7 @@ This is safe because these are user-installed, whitelisted tools that require fi
 codex e "I need to design a notification system that handles 100K notifications/day with delivery guarantees. Compare event-driven (Kafka), queue-based (RabbitMQ), and polling approaches. Consider: failure handling, scaling, operational complexity, latency requirements, and team expertise (3 backend devs, no DevOps). What would you recommend and why?" 2>/dev/null
 ```
 
-### Example 2: Online Research - Current Best Practices
+### Example 3: Online Research - Current Best Practices
 
 **Situation:** Need to know current best practices for a technology or framework.
 
@@ -148,7 +177,7 @@ codex e "I need to design a notification system that handles 100K notifications/
 gemini "What are the current best practices for implementing authentication in Next.js 14 apps in 2024? I need to understand popular libraries, session vs JWT trade-offs, and security considerations." 2>/dev/null
 ```
 
-### Example 3: Deep Reasoning - Complex Algorithm Design
+### Example 4: Deep Reasoning - Complex Algorithm Design
 
 **Situation:** Complex algorithmic problem requiring multi-step reasoning.
 
@@ -157,7 +186,7 @@ gemini "What are the current best practices for implementing authentication in N
 codex e "I need to implement a job scheduler that: 1) respects dependencies between jobs, 2) handles priority levels, 3) supports job cancellation mid-execution, 4) distributes across multiple workers. Walk through the data structures and algorithm design. What are the edge cases and how would you handle them?" 2>/dev/null
 ```
 
-### Example 4: Online Research - Library/Tool Investigation
+### Example 5: Online Research - Library/Tool Investigation
 
 **Situation:** Need current information about tools, libraries, or frameworks.
 
@@ -166,7 +195,7 @@ codex e "I need to implement a job scheduler that: 1) respects dependencies betw
 gemini "I need a Python library for parsing PDFs with table extraction. Research current options (2024), compare their accuracy, performance, and ease of use. What do developers recommend?" 2>/dev/null
 ```
 
-### Example 5: Deep Reasoning - Debugging Complex Logic
+### Example 6: Deep Reasoning - Debugging Complex Logic
 
 **Situation:** Complex bug requiring careful logical reasoning through multiple possibilities.
 
@@ -175,7 +204,7 @@ gemini "I need a Python library for parsing PDFs with table extraction. Research
 codex e "I have a distributed transaction that occasionally commits on service A but fails on service B, leaving inconsistent state. The retry logic sometimes creates duplicates. Given: idempotency keys, 2PC is not an option, compensation logic exists but races with retries. Reason through the failure scenarios and design a robust solution." 2>/dev/null
 ```
 
-### Example 6: Online Research - Documentation Lookup
+### Example 7: Online Research - Documentation Lookup
 
 **Situation:** Need to find specific API documentation or examples.
 
@@ -190,8 +219,12 @@ The consult skill complements Claude's normal problem-solving:
 
 1. **Attempt direct solution** - Use your knowledge and available tools first
 2. **Identify complexity** - Recognize when a problem is particularly challenging
-3. **Consult external AI models** - Get outside perspective on the challenging aspects
-4. **Synthesize solution** - Combine external input with your analysis
-5. **Implement** - Execute the solution using all available information
+3. **Choose the right consultant**:
+   - **Strategist** for objective strategic advice
+   - **Codex** for deep reasoning
+   - **Gemini** for current information
+4. **Consult** - Get outside perspective on the challenging aspects
+5. **Synthesize solution** - Combine external input with your analysis
+6. **Implement** - Execute the solution using all available information
 
-Remember: External AI models provide valuable perspectives, but you remain responsible for the final implementation and ensuring it fits the specific context and requirements.
+Remember: External consultants provide valuable perspectives, but you remain responsible for the final implementation and ensuring it fits the specific context and requirements.
