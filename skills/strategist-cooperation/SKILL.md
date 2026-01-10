@@ -7,15 +7,22 @@ description: Guides effective collaboration with the strategist agent—a remote
 
 The strategist is a remote consultant offering fresh perspective on complex problems. They bring experience across many projects but cannot see your code.
 
-## Key Constraint: Stateless
+## Session Continuity
 
-Each consultation is independent—the strategist has no memory of previous conversations. Always provide complete context, and reference previous advice explicitly in follow-ups.
+The strategist can be **resumed** using the agent ID from a previous consultation. When resumed, the strategist retains full context from the conversation.
+
+- **New consultation**: Start fresh when the problem is unrelated to previous work
+- **Follow-up**: Use `resume` with the agent ID to continue with preserved context
 
 ```
-Bad:  "What about the token issue we discussed?"
-Good: "Previously you suggested TTL-based caching. I've found our system
-       requires immediate revocation. How can we balance both needs?"
+Task tool:
+  subagent_type: "advisor-skills:strategist"
+  resume: "<agent-id-from-previous-consultation>"
+  prompt: "I explored the codebase and found an existing session manager.
+           How should we integrate caching with it?"
 ```
+
+If starting a **new consultation** on a related topic (without resume), provide complete context since the strategist won't have prior memory.
 
 ## When to Consult
 
@@ -99,20 +106,36 @@ Strategist recommendations are guidance, not implementation specs.
 2. **Adapt to local constraints** — Modify for technical debt, team conventions, dependencies
 3. **Re-consult if needed** — If advice conflicts with reality, provide that context and ask for alternatives
 
+## Ongoing Collaboration
+
+Treat the strategist as a partner, not a one-shot oracle. **Don't ask once and disappear**—but also don't over-consult.
+
+**Come back when:**
+- Discoveries change the problem — "I found X, which invalidates our assumption"
+- You hit a strategic blocker — "The approach won't work because of Y constraint"
+- You need to pivot direction — "Based on findings, I'm considering a different path"
+
+**Don't come back for:**
+- Implementation details you can figure out
+- Minor obstacles that don't change the strategy
+- Validation of routine progress — just keep going
+
+The goal is meaningful checkpoints, not constant hand-holding. Report back when your findings would change the strategist's advice.
+
 ## Iterative Consultation
 
-Complex problems require multiple rounds. Each round must include full context since the strategist is stateless.
+Use `resume` to continue conversations efficiently across multiple rounds.
 
 **Pattern:**
-1. Initial consultation → Get direction and framework
+1. Initial consultation → Get direction and framework (save the agent ID)
 2. Explore/implement → Discover specifics in your codebase
-3. Follow-up → Share findings, ask about challenges (include previous advice)
+3. Follow-up → Resume the agent, share findings, ask about challenges
 4. Refine → Adjust and implement
 5. Repeat as needed
 
 ### Example: Iterative Flow
 
-**Round 1:**
+**Round 1:** (new consultation)
 ```
 Problem: Token validation hits database on every request, causing
 performance issues under load (~500 req/sec).
@@ -122,31 +145,30 @@ Constraints: Small team, can't add Redis, need simple solution.
 Question: What caching approaches should we consider?
 ```
 *Strategist suggests TTL-based in-memory caching with fallback validation.*
+*Agent ID: `abc-123` returned.*
 
 **You explore codebase, find existing session manager.**
 
-**Round 2:**
+**Round 2:** (resume with agent ID `abc-123`)
 ```
-Previously you suggested TTL-based caching for token validation.
 I've explored our codebase and found we have an existing session
 manager that tracks user state.
 
 Question: How should we integrate token caching with our existing
 session infrastructure rather than building separate cache?
 ```
-*Strategist provides integration guidance.*
+*Strategist provides integration guidance (already knows the original problem).*
 
 **You implement, discover edge case with immediate revocation.**
 
-**Round 3:**
+**Round 3:** (resume with agent ID `abc-123`)
 ```
-Building on the session manager integration you suggested, I've
-implemented caching but discovered our compliance requires immediate
+I've implemented caching but discovered our compliance requires immediate
 token revocation (within 1 second). TTL-based caching can't guarantee this.
 
 Question: How can we handle immediate revocation while keeping cache benefits?
 ```
-*Strategist suggests event-driven invalidation pattern.*
+*Strategist suggests event-driven invalidation pattern (full context preserved).*
 
 ## Common Mistakes
 
@@ -166,9 +188,13 @@ Question: How can we handle immediate revocation while keeping cache benefits?
 - Bad: Implement advice immediately without checking codebase fit
 - Good: Validate against actual code, adapt to local constraints, re-consult if conflicts arise
 
-**Assuming memory**
-- Bad: "What about the issue we discussed earlier?"
-- Good: Summarize previous advice, explain what you learned, ask specific follow-up
+**Ghosting when things change**
+- Bad: Discover something that invalidates the advice, but keep implementing anyway
+- Good: Report back when findings would change the strategist's recommendations
+
+**Forgetting to resume**
+- Bad: Starting a new consultation and manually re-explaining previous context
+- Good: Use `resume` with the agent ID to continue with full context preserved
 
 **Leading the witness**
 - Bad: "Redis is clearly the right choice here, right?" or "Our architecture is fundamentally broken"
