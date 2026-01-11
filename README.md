@@ -1,35 +1,57 @@
-# Claude Skills Collection
+# Advisor Skills for Claude Code
 
-Custom Claude Code skills and agents for enhanced AI collaboration and problem-solving.
+**Empower Claude with a "Council of Experts" for better decision-making.**
+
+## Introduction
+
+This plugin extends Claude Code's capabilities by giving it the ability to **consult specialized external models and agents**. Just as senior engineers seek second opinions or research documentation when stuck, this toolset allows Claude to:
+
+1.  **Break Tunnel Vision:** Use the **Strategist** agent to get an unbiased, high-level perspective on architectural decisions. By delegating complex reasoning to this specialized sub-agent (using the **Opus** model), you save costs by reserving high-intelligence processing only for critical strategic decisions while keeping your main session efficient.
+2.  **Verify & Research:** Use **Gemini** to fetch real-time documentation and libraries, preventing hallucinations about outdated APIs.
+3.  **Deepen Reasoning:** Use **Codex** to handle complex algorithmic logic and multi-step reasoning tasks that require a dedicated focus.
+
+Instead of relying on a single model's training data, this workflow enables a collaborative AI approach to problem-solving.
 
 ## Installation
 
 Add this collection to your Claude Code environment:
 
 ```bash
-/plugin marketplace add qduc/claude-skills
+/plugin marketplace add qduc/advisor-skills
 ```
 
 ## Skills
 
-### Advisor
+### Consult
 
-**Consult external AI models when facing complex challenges**
+**Seek second opinions from specialized AI models and agents**
 
-The Advisor skill enables Claude to seek second opinions from specialized AI models:
-- **Codex** - Deep reasoning for complex logical problems, multi-faceted analysis, and architectural trade-offs
-- **Gemini** - Online research for current information, documentation, and real-world examples
+The Consult skill enables Claude to seek advice from various sources:
+- **Strategist Agent** - Unbiased, objective advice on complex strategic decisions and architectural trade-offs.
+- **Codex** - Deep reasoning for complex logical problems and multi-faceted analysis.
+- **Gemini** - Online research for current information, documentation, and real-world examples.
 
 Use when stuck on difficult problems, validating approaches, or needing fresh perspectives.
 
 **Installation:**
 ```bash
-/skill install advisor
+/skill install consult
+```
+
+### Strategist Cooperation
+
+**Guidelines for effective collaboration with the Strategist agent**
+
+Provides patterns and best practices for working with the Strategist, including session continuity, preparing context, and handling advice.
+
+**Installation:**
+```bash
+/skill install strategist-cooperation
 ```
 
 ## Agents
 
-### Neutral Advisor
+### Strategist
 
 **Unbiased, objective advice on complex strategic decisions**
 
@@ -54,11 +76,14 @@ The agent applies first principles thinking, identifies hidden assumptions, and 
 ```
 claude-skills/
 ├── .claude-plugin/
-│   └── marketplace.json
+│   ├── marketplace.json
+│   └── plugin.json
 ├── agents/
-│   └── neutral-advisor.md
+│   └── strategist.md
 ├── skills/
-│   └── advisor/
+│   ├── consult/
+│   │   └── SKILL.md
+│   └── strategist-cooperation/
 │       └── SKILL.md
 └── README.md
 ```
