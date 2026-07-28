@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>grill-visual</title>
+<!-- Suppress the automatic /favicon.ico fetch: it arrives without a token and
+     would log a 403 in the console on every load. -->
+<link rel="icon" href="data:,">
+<style>
+/* ============================================================ tokens
+   Retune the whole surface from these ten. Dark first; light mode
+   re-steps the same roles rather than flipping them.
+   State colors come from the dataviz status palette (good / warning),
+   and are always paired with a text badge so color never carries
+   meaning alone — that is the documented mitigation for the light
+   surface, where amber is sub-3:1 as ink. */
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a19;
+  --border: #383835;
+  --text: #ffffff;
+  --muted: #898781;
+  --accent: #7db3ff;
+  --on: #0ca30c;    /* chosen / live      */
+  --off: #898781;   /* rejected / dimmed  */
+  --open: #fab219;  /* unresolved         */
+  --on-ink: #0d0d0d;
+  --open-ink: #0d0d0d;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f9f9f7;
+    --surface: #fcfcfb;
+    --border: #c3c2b7;
+    --text: #0b0b0b;
+    --muted: #52514e;
+    --accent: #1c50a8;
+    --on: #006300;
+    --off: #898781;
+    --open: #fab219;
+    --on-ink: #ffffff;
+    --open-ink: #0b0b0b;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex; flex-direction: column;
+}
+h1, h2, h3 { line-height: 1.3; }
+code, kbd, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+kbd {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 0 4px; font-size: 12px; color: var(--muted);
+}
+
+/* ============================================================ chrome */
+header {
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+}
+header .brand { font-weight: 650; letter-spacing: .2px; }
+header .topic { color: var(--muted); }
+#status { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+#status .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+#status[data-s="waiting"] .dot { background: var(--open); }
+#status[data-s="thinking"] .dot { background: var(--accent); }
+/* Hollow ring, so "disconnected" is not the same grey blob as a dot that has
+   simply not been assigned a state yet. */
+#status[data-s="disconnected"] .dot { background: transparent; box-shadow: inset 0 0 0 2px var(--off); }
+
+main {
+  flex: 1; min-height: 0; display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px; gap: 0;
+}
+/* Narrow: the ledger stacks under the questions. It must take only what it
+   needs (`auto`) and never more than a third of the viewport, or an empty pane
+   crushes the question column on a short window. */
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  #ledger {
+    border-left: 0; border-top: 1px solid var(--border);
+    max-height: 33vh; padding: 14px 20px;
+  }
+}
+#round { overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; max-width: 900px; }
+#ledger {
+  overflow-y: auto; padding: 20px; border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 60%, var(--bg));
+  font-size: 13.5px;
+}
+#ledger h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin: 0 0 12px; }
+#ledger .row { padding: 8px 0; border-bottom: 1px solid var(--border); }
+#ledger .row:last-child { border-bottom: 0; }
+#ledger summary { cursor: pointer; }
+#ledger .qid { color: var(--muted); font-family: ui-monospace, monospace; margin-right: 6px; }
+#ledger .body { color: var(--muted); padding: 6px 0 2px; white-space: pre-wrap; }
+#ledger .empty { color: var(--muted); }
+
+footer {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 24px; border-top: 1px solid var(--border); background: var(--surface);
+}
+footer .hint { color: var(--muted); font-size: 13px; margin-left: auto; }
+button {
+  font: inherit; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--text);
+  padding: 9px 16px;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 600; }
+button:disabled { opacity: .5; cursor: default; }
+
+/* ============================================================ question cards */
+.q { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 18px 20px; }
+.q > .prompt { font-size: 17px; font-weight: 600; margin: 0 0 4px; }
+.q > .meta { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+/* Adaptive: a text-only question gets no diagram frame at all. */
+.q > .visual { margin: 4px 0 16px; }
+.opts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.opt {
+  display: flex; gap: 10px; align-items: flex-start;
+  border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer;
+}
+.opt:hover { border-color: var(--accent); }
+.opt input { margin: 4px 0 0; accent-color: var(--accent); }
+.opt[data-sel="1"] { border-color: var(--on); box-shadow: inset 0 0 0 1px var(--on); }
+.opt .rec {
+  margin-left: auto; font-size: 11px; font-weight: 700; white-space: nowrap;
+  background: var(--on); color: var(--on-ink); border-radius: 999px; padding: 1px 8px;
+}
+.notes-label { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+textarea {
+  width: 100%; min-height: 62px; resize: vertical; font: inherit;
+  color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+}
+textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* ============================================================ CLASS KIT
+   Semantic markup only — no coordinates, no inline styles. CSS lays out. */
+
+/* .card — bordered content block */
+.card {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+  padding: 12px 14px; margin: 8px 0;
+}
+.card > .title { font-weight: 650; margin-bottom: 4px; }
+
+/* .cols — side-by-side comparison columns */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 8px 0; }
+.cols > * {
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+}
+.cols h4 { margin: 0 0 6px; font-size: 14px; }
+.cols ul { margin: 0; padding-left: 18px; }
+
+/* .tree — nested <ul> as a decision tree.
+   The through-line is each li's REAL border-left, so it stops exactly at that
+   li's own bottom — no dangling stub past the last child, and no colour-matched
+   mask that would break on a non-default background. The last child swaps its
+   border for an L-corner drawn on ::before. ::after is left free for the state
+   badge, which must never be clobbered by connector geometry. */
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree > li { position: relative; padding: 3px 0; }
+.tree ul { margin-left: 13px; }
+.tree ul > li {
+  position: relative; padding: 3px 0 3px 22px;
+  border-left: 1px solid var(--border);
+}
+.tree ul > li::before {
+  content: ""; position: absolute; left: 0; top: 15px;
+  width: 16px; height: 1px; background: var(--border);
+}
+.tree ul > li:last-child { border-left-color: transparent; }
+.tree ul > li:last-child::before {
+  left: -1px; top: 0; width: 16px; height: 15px; background: none;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* .flow / .step — annotated flow with arrows; vertical when .down */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 22px; margin: 8px 0; }
+.tree { margin: 8px 0; }
+.flow.down { flex-direction: column; gap: 20px; }
+.flow .step {
+  flex: 1 1 130px; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 12px; background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+  position: relative;
+}
+/* In a column flow, flex-basis governs HEIGHT — 130px there would inflate every
+   step into a tall empty box. Only the row direction wants to grow. */
+.flow.down .step { flex: 0 0 auto; }
+.flow .step .note { display: block; color: var(--muted); font-size: 12.5px; }
+.flow:not(.down) .step + .step::before,
+.flow.down .step + .step::before {
+  content: "\2192"; position: absolute; color: var(--muted); font-size: 17px; line-height: 1;
+}
+.flow:not(.down) .step + .step::before { left: -17px; top: 50%; transform: translateY(-50%); }
+.flow.down .step + .step::before { content: "\2193"; top: -18px; left: 16px; }
+
+/* state modifiers — legible at a glance, and always badge-labelled */
+.on, .off, .open { border-radius: 6px; }
+.on { color: var(--on); font-weight: 600; }
+/* No opacity here: on a tree li it would also fade that li's border-left, so the
+   through-line would change tone halfway down. --off already dims the ink. */
+.off { color: var(--off); text-decoration: line-through; }
+.open { color: var(--text); }
+.card.on, .cols > .on, .flow .step.on { border-color: var(--on); box-shadow: inset 2px 0 0 var(--on); color: inherit; }
+.card.off, .cols > .off, .flow .step.off { border-style: dashed; opacity: .6; text-decoration: none; color: inherit; }
+.card.open, .cols > .open, .flow .step.open { border-color: var(--open); box-shadow: inset 2px 0 0 var(--open); color: inherit; }
+.on::after, .off::after, .open::after {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  margin-left: 7px; padding: 1px 6px; border-radius: 999px; vertical-align: 1px;
+  text-decoration: none; display: inline-block;
+}
+.on::after   { content: "chosen";   background: var(--on);   color: var(--on-ink); }
+.off::after  { content: "rejected"; background: transparent; color: var(--off); border: 1px solid var(--off); }
+.open::after { content: "open";     background: var(--open); color: var(--open-ink); }
+/* A stated tree node that HAS children must keep its badge on the label line,
+   not stranded under the whole subtree. Flex + order does that without asking
+   the author to wrap the label in an extra span. */
+.tree li.on, .tree li.off, .tree li.open {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+}
+.tree li.on > ul, .tree li.off > ul, .tree li.open > ul { flex: 0 0 100%; order: 2; }
+.tree li.on::after, .tree li.off::after, .tree li.open::after { order: 1; }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">grill-visual</span>
+  <span class="topic" id="topic"></span>
+  <span id="status" data-s="thinking"><span class="dot"></span><span id="status-text">connecting…</span></span>
+</header>
+
+<main>
+  <section id="round" aria-live="polite"></section>
+  <aside id="ledger">
+    <h2>Decision ledger</h2>
+    <div id="ledger-body"><div class="empty">No decisions resolved yet.</div></div>
+  </aside>
+</main>
+
+<footer>
+  <button id="submit" class="primary" disabled>Submit answers</button>
+  <button id="done">Done grilling</button>
+  <span class="hint"><kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd> submits · empty submit accepts every recommendation</span>
+</footer>
+
+<script>
+// Port and token arrive through this page's own URL — client.html is a static
+// asset and is never rewritten per session.
+const TOKEN = new URLSearchParams(location.search).get('token') || location.hash.slice(1);
+const api = (p, q = '') => `${p}?token=${encodeURIComponent(TOKEN)}${q}`;
+
+const el = {
+  round: document.getElementById('round'),
+  ledger: document.getElementById('ledger-body'),
+  status: document.getElementById('status'),
+  statusText: document.getElementById('status-text'),
+  submit: document.getElementById('submit'),
+  done: document.getElementById('done'),
+};
+
+let pending = null;   // current round
+let draft = new Map(); // id -> {selected:Set, notes:string, touched:bool}
+let connected = false;
+let finished = false;  // "Done grilling" pressed — terminal, nothing may undo it
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function setStatus(s, text) {
+  el.status.dataset.s = s;
+  el.statusText.textContent = text;
+}
+
+function refreshStatus() {
+  if (finished) return setStatus('thinking', 'grilling ended — safe to close this tab');
+  if (!connected) return setStatus('disconnected', 'disconnected');
+  if (pending) return setStatus('waiting', 'waiting for your answer');
+  setStatus('thinking', 'Claude is thinking…');
+}
+
+/* ---------------------------------------------------------------- render */
+
+function renderRound(round) {
+  pending = round;
+  draft = new Map();
+  el.round.replaceChildren();
+
+  if (finished) {
+    const c = document.createElement('div');
+    c.className = 'card on';
+    c.innerHTML = '<div class="title">Grilling ended</div><div>Claude is writing the decision ledger to <code>.grill/</code>. Nothing more will be asked here.</div>';
+    el.round.append(c);
+    el.submit.disabled = true;
+    el.done.disabled = true;
+    el.submit.textContent = 'Submit answers';
+    refreshStatus();
+    return;
+  }
+
+  if (!round || !round.questions?.length) {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = '<div class="title">Nothing to answer right now</div><div>Claude is composing the next round. This page will update on its own.</div>';
+    el.round.append(c);
+    el.submit.disabled = true;
+    // Drop the stale "Accept: …" label — those recommendations are resolved.
+    el.submit.textContent = 'Submit answers';
+    refreshStatus();
+    return;
+  }
+
+  for (const q of round.questions) {
+    draft.set(q.id, { selected: new Set(q.recommended ? [q.recommended] : []), notes: '', touched: false });
+
+    const card = document.createElement('article');
+    card.className = 'q';
+    const kindLabel = q.kind === 'multi' ? 'choose any' : q.kind === 'choice' ? 'choose one' : 'open question';
+    card.innerHTML =
+      `<p class="prompt">${esc(q.prompt)}</p>` +
+      `<div class="meta">${esc(q.id)} · ${kindLabel}</div>` +
+      (q.body ? `<div class="visual">${q.body}</div>` : '') +
+      (q.options?.length ? '<div class="opts"></div>' : '') +
+      `<label class="notes-label" for="n-${esc(q.id)}">Other / notes</label>` +
+      `<textarea id="n-${esc(q.id)}" placeholder="Anything the options miss — this is a first-class answer, not a fallback."></textarea>`;
+
+    const opts = card.querySelector('.opts');
+    if (opts) {
+      for (const [i, o] of q.options.entries()) {
+        const lab = document.createElement('label');
+        lab.className = 'opt';
+        const isRec = o === q.recommended;
+        if (isRec) lab.dataset.sel = '1';
+        lab.innerHTML =
+          `<input type="${q.kind === 'multi' ? 'checkbox' : 'radio'}" name="${esc(q.id)}" value="${esc(o)}"${isRec ? ' checked' : ''}>` +
+          `<span>${esc(o)}</span>` +
+          (isRec ? '<span class="rec">recommended</span>' : '');
+        const input = lab.querySelector('input');
+        input.addEventListener('change', () => {
+          const d = draft.get(q.id);
+          d.touched = true;
+          if (q.kind === 'multi') {
+            input.checked ? d.selected.add(o) : d.selected.delete(o);
+          } else {
+            d.selected = new Set([o]);
+          }
+          for (const other of opts.querySelectorAll('.opt')) {
+            const inp = other.querySelector('input');
+            other.dataset.sel = inp.checked ? '1' : '0';
+          }
+          syncSubmit();
+        });
+        opts.append(lab);
+      }
+    }
+
+    const ta = card.querySelector('textarea');
+    ta.addEventListener('input', () => {
+      const d = draft.get(q.id);
+      d.notes = ta.value;
+      d.touched = d.touched || ta.value.trim().length > 0;
+      syncSubmit();
+    });
+
+    el.round.append(card);
+  }
+
+  el.submit.disabled = false;
+  syncSubmit();
+  refreshStatus();
+}
+
+// Empty submit means "I agree with all your recommendations" — so say what
+// agreeing commits to, right on the button.
+function syncSubmit() {
+  const untouched = [...draft.values()].every((d) => !d.touched);
+  if (untouched && pending) {
+    const recs = pending.questions.map((q) => q.recommended).filter(Boolean);
+    el.submit.textContent = recs.length ? `Accept: ${recs.join(' · ')}` : 'Submit answers';
+  } else {
+    el.submit.textContent = 'Submit answers';
+  }
+}
+
+function renderLedger(history) {
+  if (!history?.length) {
+    el.ledger.innerHTML = '<div class="empty">No decisions resolved yet.</div>';
+    return;
+  }
+  el.ledger.replaceChildren();
+  for (const h of history) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const decision = (h.selected || []).join(' · ') || (h.notes ? 'freeform answer' : '—');
+    row.innerHTML =
+      `<details><summary><span class="qid">${esc(h.id)}</span>&rarr; ${esc(decision)}</summary>` +
+      `<div class="body">${esc(h.prompt)}` +
+      ((h.options || []).length ? `\n\n${h.options.map((o) => `  - ${esc(o)}`).join('\n')}` : '') +
+      (h.notes ? `\n\nnotes: ${esc(h.notes)}` : '') +
+      (h.accepted ? '\n\n(accepted recommendation)' : '') +
+      `</div></details>`;
+    el.ledger.append(row);
+  }
+}
+
+/* ---------------------------------------------------------------- submit */
+
+let sending = false;
+async function send(done) {
+  if (sending) return;
+  sending = true;
+  el.submit.disabled = true;
+  el.done.disabled = true;
+  const answers = pending ? pending.questions.map((q) => {
+    const d = draft.get(q.id) || { selected: new Set(), notes: '', touched: false };
+    return { id: q.id, selected: [...d.selected], notes: d.notes.trim(), accepted: !d.touched };
+  }) : [];
+  try {
+    const r = await fetch(api('/answer'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ answers, done: Boolean(done) }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    pending = null;
+    if (done) finished = true;
+    renderRound(null);
+  } catch (e) {
+    setStatus('disconnected', `could not submit: ${e.message}`);
+    el.submit.disabled = false;
+    el.done.disabled = false;
+  } finally {
+    sending = false;
+  }
+}
+
+el.submit.addEventListener('click', () => send(false));
+el.done.addEventListener('click', () => send(true));
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && pending) { e.preventDefault(); send(false); }
+});
+
+/* ---------------------------------------------------------------- transport */
+
+function applyState(s) {
+  renderLedger(s.history);
+  // Server-derived, so a fresh round after DONE un-ends the page rather than
+  // being silently swallowed.
+  finished = Boolean(s.done);
+  if (finished) { renderRound(null); return; }
+  if (s.pending) renderRound(s.pending);
+  else { pending = null; renderRound(null); }
+}
+
+// Lossless reload: rebuild everything from the server before streaming.
+async function boot() {
+  try {
+    const r = await fetch(api('/state'));
+    if (r.status === 403) { document.body.innerHTML = '<p style="padding:24px">Invalid or missing token. Reopen the URL that grill-visual printed.</p>'; return; }
+    connected = true;
+    applyState(await r.json());
+  } catch { connected = false; refreshStatus(); }
+
+  const es = new EventSource(api('/events'));
+  es.addEventListener('open', () => { connected = true; refreshStatus(); });
+  es.addEventListener('error', () => { connected = false; refreshStatus(); });
+  for (const ev of ['round', 'state']) {
+    es.addEventListener(ev, (m) => { connected = true; applyState(JSON.parse(m.data)); });
+  }
+
+  // Heartbeat: lets push-round tell "tab closed" from "user still thinking".
+  setInterval(() => {
+    fetch(api('/heartbeat')).then(() => { if (!connected) { connected = true; refreshStatus(); } })
+      .catch(() => { connected = false; refreshStatus(); });
+  }, 5000);
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Wrapper so the round pusher can be an ES module while staying extensionless.
+set -e
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+command -v node >/dev/null 2>&1 || {
+  echo "grill-visual: node not found on PATH (Node >= 18 required)" >&2
+  exit 1
+}
+exec node "$dir/push-round.mjs" "$@"

@@ -40,6 +40,14 @@ Breaks complex requests into components, selects the right agent for each, and c
 
 Investigates the existing codebase, resolves ambiguity by escalating to the engineer, walks the decision tree one question at a time, and produces a design artifact. Continues until implementation is mostly mechanical.
 
+### Grill Visual
+
+**Interrogate a design in the browser instead of the terminal.**
+
+Opens a local web page and pushes questions to it as rendered HTML — decision trees, comparison grids, annotated flows — then reads the answers back. Batches 1–4 independent questions per round; genuine forks stay serialized. A decision ledger keeps accumulated understanding visible, so a contradiction at question 15 is noticeable.
+
+Node stdlib only, no dependencies, bound to localhost behind a per-session token. Exports the resolved decisions to `.grill/<slug>.md`.
+
 ### Implement Feature
 
 **Implement an approved design as thin end-to-end slices.**
@@ -56,6 +64,12 @@ Builds breadth-first: establishes a skeleton, proves the complete happy path, th
 │   ├── cartographer/SKILL.md
 │   ├── coordinator/SKILL.md
 │   ├── grill-design/SKILL.md
+│   ├── grill-visual/
+│   │   ├── SKILL.md
+│   │   ├── bin/push-round
+│   │   ├── bin/push-round.mjs
+│   │   ├── client.html
+│   │   └── server.mjs
 │   └── implement-feature/SKILL.md
 └── README.md
 ```
